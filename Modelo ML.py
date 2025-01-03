@@ -68,19 +68,6 @@ testset = CIFAR10(root=testset_path,train=False, download=False, transform=test_
 testloader = DataLoader(testset, batch_size=batchSize, shuffle=True)
 
 #Funciones Auxiliares para graficar 
-def view_classify(img, ps):
-  ps = ps.data.numpy().squeeze()
-  fig, (ax1, ax2) = plt.subplots(figsize=(16,13), ncols=2)
-  ax1.imshow(img.numpy().transpose((1, 2, 0)))
-  ax1.axis('off')
-  ax2.barh(np.arange(cantidadClases), ps)
-  ax2.set_aspect(0.1)
-  ax2.set_yticks(np.arange(cantidadClases))
-  ax2.set_yticklabels(clases, size='medium');
-  ax2.set_title('Probabilidad de las Clases')
-  ax2.set_xlim(0, 1.1)
-
-  plt.tight_layout()
   
 def plot_confusion_matrix(cm, class_names, title="Matriz de Confusión"):
   fig, ax = plt.subplots(figsize=(6, 6))
@@ -197,11 +184,10 @@ steps = 0
 train_losses, test_losses = [], []
 precisions, recalls, f1_scores, accus, avg_specificities = [], [], [], [], []
 
-print("Empiezo a entrenar")
-
 for e in range(epochs):
   running_loss = 0
   for images,labels in trainloader:
+    model.train()
     optimizer.zero_grad()
     log_ps = model(images)
     loss = criterion(log_ps,labels)
@@ -218,6 +204,7 @@ for e in range(epochs):
     # Turn off gradients for validation
     with torch.no_grad():
       for images, labels in testloader:
+        model.eval()
         log_ps = model(images)
         test_loss += criterion(log_ps, labels)
 
@@ -251,7 +238,6 @@ for e in range(epochs):
     accuracy = accuracy_score(all_labels, all_preds)
     avg_specificity = np.mean(specificities)
     
-    model.train()
     train_losses.append(running_loss / len(trainloader))
     test_losses.append(test_loss / len(testloader))
     precisions.append(precision_weighted)
@@ -280,6 +266,7 @@ for e in range(epochs):
 plt.plot(train_losses, label='Pérdidas de Entrenamiento')
 plt.plot(test_losses, label='Pérdidas de Validación')
 plt.legend(frameon=False)
+plt.show()
 
 #Graficar los indicadores de validación
 plt.plot(precisions, label='Precisión')
@@ -288,6 +275,7 @@ plt.plot(f1_scores, label='F1')
 plt.plot(accus, label='Exactitud')  
 plt.plot(avg_specificities, label='Especificidad')  
 plt.legend(frameon=True)
+plt.show()
 
 #Calcular y graficar ROC y AUC
 all_labels = []
@@ -330,4 +318,3 @@ plt.show()
 # Calcular AUC
 overall_auc = roc_auc_score(all_labels, all_probs, multi_class='ovr')
 print("Area Bajo la Curva (AUC): {:.2f}".format(overall_auc))
-    
